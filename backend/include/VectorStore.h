@@ -23,7 +23,8 @@ public:
 private:
 
     float cosine_similarity(const std::vector<float>& a, const std::vector<float>& b) const;
-    float dotProduct(const std::vector<float>& vec1, const std::vector<float>& vec2) const;
+    float dotProduct(const std::vector<float>& vec1,
+                     const std::vector<float>& vec2) const;
     float magnitude(const std::vector<float>& vec) const;
 
     //Stores all Chunks                        
