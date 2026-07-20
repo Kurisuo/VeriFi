@@ -1,15 +1,48 @@
 {
-  "generated_at": "2026-07-20T19:56:44.676285+00:00",
+  "generated_at": "2026-07-20T21:07:57.858432+00:00",
   "documents": 3,
   "pages": 59,
   "layout_chunks": 612,
   "semantic_chunks": 580,
+  "cache": {
+    "extraction": {
+      "version": "layout-v2",
+      "hits": 3,
+      "misses": 0,
+      "documents": [
+        {
+          "source_document": "brokerage-account-customer-agreement.pdf",
+          "status": "hit",
+          "cache_hit": true,
+          "page_count": 53,
+          "lookup_seconds": 0.0043,
+          "extraction_seconds": 0.0
+        },
+        {
+          "source_document": "privacy.pdf",
+          "status": "hit",
+          "cache_hit": true,
+          "page_count": 3,
+          "lookup_seconds": 0.0005,
+          "extraction_seconds": 0.0
+        },
+        {
+          "source_document": "terms-and-conditions.pdf",
+          "status": "hit",
+          "cache_hit": true,
+          "page_count": 3,
+          "lookup_seconds": 0.0004,
+          "extraction_seconds": 0.0
+        }
+      ]
+    }
+  },
   "timings": {
-    "extraction_seconds": 11.682,
-    "layout_chunking_seconds": 0.0122,
-    "semantic_chunking_seconds": 0.0276,
-    "embedding_seconds": 3.0546,
-    "write_seconds": 0.0772,
-    "total_seconds": 14.8535
+    "extraction_seconds": 0.0135,
+    "layout_chunking_seconds": 0.0124,
+    "semantic_chunking_seconds": 0.0298,
+    "embedding_seconds": 4.6057,
+    "write_seconds": 0.0792,
+    "total_seconds": 4.7406
   }
 }

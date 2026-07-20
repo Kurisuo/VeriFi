@@ -6,15 +6,19 @@ from pathlib import Path
 try:
     from .chunker import chunk_pages
     from .embedder import add_embeddings
+    from .extraction_cache import DEFAULT_CACHE_DIR, load_or_extract_pdf_layout
     from .jsonl_writer import write_json, write_jsonl
     from .pdf_reader import extract_pdf_text
     from .semantic_chunker import semantic_chunk_pages
+    from .versions import EXTRACTION_VERSION
 except ImportError:
     from chunker import chunk_pages
     from embedder import add_embeddings
+    from extraction_cache import DEFAULT_CACHE_DIR, load_or_extract_pdf_layout
     from jsonl_writer import write_json, write_jsonl
     from pdf_reader import extract_pdf_text
     from semantic_chunker import semantic_chunk_pages
+    from versions import EXTRACTION_VERSION
 
 
 SOURCE_DIR = Path("source_files")
@@ -35,13 +39,34 @@ def source_fingerprint(path):
     return digest.hexdigest()
 
 
-def extract_documents(pdf_files):
+def extract_documents(pdf_files, cache_dir=DEFAULT_CACHE_DIR, return_cache_stats=False):
     documents = []
     total_pages = 0
+    cache_events = []
     for pdf_path in pdf_files:
-        pages = extract_pdf_text(str(pdf_path))
+        fingerprint = source_fingerprint(pdf_path)
+        pages, cache_event = load_or_extract_pdf_layout(
+            pdf_path,
+            fingerprint,
+            cache_dir=cache_dir,
+            extractor=extract_pdf_text,
+        )
         total_pages += len(pages)
-        documents.append((pdf_path, pages, source_fingerprint(pdf_path)))
+        documents.append((pdf_path, pages, fingerprint))
+        cache_events.append(cache_event)
+        print(
+            f"  {pdf_path.name}: cache {cache_event['status']} "
+            f"({len(pages)} pages)",
+            flush=True,
+        )
+    if return_cache_stats:
+        cache_stats = {
+            "version": EXTRACTION_VERSION,
+            "hits": sum(event["cache_hit"] for event in cache_events),
+            "misses": sum(not event["cache_hit"] for event in cache_events),
+            "documents": cache_events,
+        }
+        return documents, total_pages, cache_stats
     return documents, total_pages
 
 
@@ -88,7 +113,10 @@ def run_pipeline(pdf_files):
 
     stage_started = time.perf_counter()
     print("Stage: extracting PDF layout", flush=True)
-    documents, total_pages = extract_documents(pdf_files)
+    documents, total_pages, extraction_cache = extract_documents(
+        pdf_files,
+        return_cache_stats=True,
+    )
     timings["extraction_seconds"] = time.perf_counter() - stage_started
 
     stage_started = time.perf_counter()
@@ -119,6 +147,7 @@ def run_pipeline(pdf_files):
         "pages": total_pages,
         "layout_chunks": len(layout_chunks),
         "semantic_chunks": len(semantic_chunks),
+        "cache": {"extraction": extraction_cache},
         "timings": {key: round(value, 4) for key, value in timings.items()},
     }
     write_json(stats, str(STATS_PATH))
@@ -137,6 +166,11 @@ def main():
     print(f"Pages: {stats['pages']}")
     print(f"Layout chunks: {stats['layout_chunks']}")
     print(f"Semantic chunks: {stats['semantic_chunks']}")
+    extraction_cache = stats["cache"]["extraction"]
+    print(
+        f"Extraction cache: {extraction_cache['hits']} hits, "
+        f"{extraction_cache['misses']} misses"
+    )
     for name, seconds in stats["timings"].items():
         print(f"{name}: {seconds:.4f}")
     print(f"Layout output written to: {LAYOUT_OUTPUT_PATH}")

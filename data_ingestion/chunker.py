@@ -3,11 +3,10 @@ import re
 
 try:
     from .layout import Block, BlockType, build_sections
+    from .versions import EXTRACTION_VERSION
 except ImportError:
     from layout import Block, BlockType, build_sections
-
-
-EXTRACTION_VERSION = "layout-v2"
+    from versions import EXTRACTION_VERSION
 
 
 def clean_text(text):

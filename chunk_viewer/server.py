@@ -294,6 +294,11 @@ HTML_PAGE = """<!doctype html>
       const timingEntries = Object.entries(ingestion?.timings || {})
         .map(([key, value]) => `<span class="meta-item"><strong>${escapeHtml(key.replaceAll("_", " "))}:</strong> ${escapeHtml(Number(value).toFixed(4))}s</span>`)
         .join("");
+      const extractionCache = ingestion?.cache?.extraction;
+      const cacheEntries = extractionCache ? `
+        <span class="meta-item"><strong>Extraction cache hits:</strong> ${escapeHtml(extractionCache.hits)}</span>
+        <span class="meta-item"><strong>Extraction cache misses:</strong> ${escapeHtml(extractionCache.misses)}</span>
+      ` : "";
       const timingCard = ingestion ? `
         <div class="summary-card">
           <div class="metadata">
@@ -301,6 +306,7 @@ HTML_PAGE = """<!doctype html>
             <span class="meta-item"><strong>Pages:</strong> ${escapeHtml(ingestion.pages)}</span>
             <span class="meta-item"><strong>Layout chunks:</strong> ${escapeHtml(ingestion.layout_chunks)}</span>
             <span class="meta-item"><strong>Semantic chunks:</strong> ${escapeHtml(ingestion.semantic_chunks)}</span>
+            ${cacheEntries}
           </div>
           <div class="metadata">${timingEntries}</div>
         </div>

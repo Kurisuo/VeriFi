@@ -19,6 +19,7 @@ Comparison and runtime artifacts:
 ```text
 output/layout_chunks.jsonl
 output/ingestion_stats.json
+output/cache/extracted_layouts/
 ```
 
 ## Quick Start
@@ -52,6 +53,9 @@ Runtime stats written to: output/ingestion_stats.json
 ```
 
 The first run may take longer because Sentence Transformers downloads the embedding model.
+PDF layout extraction is cached by the PDF's SHA-256 fingerprint and the extraction
+version. An unchanged PDF uses its cached pages on later runs; modifying the PDF or
+bumping `EXTRACTION_VERSION` creates a cache miss and safely re-extracts it.
 
 ## Input Documents
 

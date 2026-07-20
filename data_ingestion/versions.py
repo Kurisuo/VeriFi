@@ -1,0 +1,1 @@
+EXTRACTION_VERSION = "layout-v2"
