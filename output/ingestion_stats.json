@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-20T19:56:44.676285+00:00",
+  "documents": 3,
+  "pages": 59,
+  "layout_chunks": 612,
+  "semantic_chunks": 580,
+  "timings": {
+    "extraction_seconds": 11.682,
+    "layout_chunking_seconds": 0.0122,
+    "semantic_chunking_seconds": 0.0276,
+    "embedding_seconds": 3.0546,
+    "write_seconds": 0.0772,
+    "total_seconds": 14.8535
+  }
+}
