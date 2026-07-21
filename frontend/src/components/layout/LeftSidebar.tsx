@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const DEMO_QUESTIONS = [
   "Can I take money out of my traditional IRA before age 59½?",
   "What account fees might apply to a brokerage account?",
@@ -12,6 +14,24 @@ const PIPELINE_STEPS = [
   "Retrieving top policy chunks...",
   "Generating grounded response...",
 ];
+
+function HomeIcon() {
+  return (
+    <svg
+      className="sidebar-logo__home-icon"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M12 3.2 3.8 10.2c-.3.3-.4.6-.4 1v8.2c0 .9.7 1.6 1.6 1.6H9.5V14.5c0-.6.4-1 1-1h3c.6 0 1 .4 1 1V21h4.5c.9 0 1.6-.7 1.6-1.6V11.2c0-.4-.1-.7-.4-1L12 3.2Z"
+      />
+    </svg>
+  );
+}
 
 interface LeftSidebarProps {
   onSelectQuestion: (question: string) => void;
@@ -28,7 +48,14 @@ export function LeftSidebar({
     <aside className="left-sidebar">
       <div className="left-sidebar__top">
         <div className="sidebar-logo">
-          <div className="sidebar-logo__icon">F</div>
+          <Link
+            to="/"
+            className="sidebar-logo__icon"
+            aria-label="Back to home"
+            title="Home"
+          >
+            <HomeIcon />
+          </Link>
           <div>
             <p className="sidebar-logo__eyebrow">Internal Prototype</p>
             <p className="sidebar-logo__name">Policy Assist</p>
