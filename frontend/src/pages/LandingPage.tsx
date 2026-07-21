@@ -30,31 +30,11 @@ const TECH_PILLS = [
 ];
 
 const TEAM = [
-  {
-    name: "Christopher Zarraga Jimenez",
-    role: "Vector Store Engineer · Project Owner",
-    initials: "CZ",
-  },
-  {
-    name: "Sai Gonuguntla",
-    role: "Frontend React Developer",
-    initials: "SG",
-  },
-  {
-    name: "Divya Machiraju",
-    role: "Integration, Prompting & QA",
-    initials: "DM",
-  },
-  {
-    name: "Srushti Chaudhari",
-    role: "Data Ingestion Lead",
-    initials: "SC",
-  },
-  {
-    name: "Ethan Williams",
-    role: "API / Backend Bridge",
-    initials: "EW",
-  },
+  { name: "Christopher Zarraga Jimenez", initials: "CZ" },
+  { name: "Sai Gonuguntla", initials: "SG" },
+  { name: "Divya Machiraju", initials: "DM" },
+  { name: "Srushti Chaudhari", initials: "SC" },
+  { name: "Ethan Williams", initials: "EW" },
 ];
 
 export default function LandingPage() {
@@ -185,20 +165,17 @@ export default function LandingPage() {
         <p className="lp-section-eyebrow">The people behind VeriFi</p>
         <h2 className="lp-section-title">Meet the team</h2>
         <p className="lp-section-subtitle">
-          Five roles, one pipeline — from document ingestion to grounded answers
-          in the UI.
+          The five people building VeriFi end to end — from document ingestion
+          to grounded answers in the UI.
         </p>
 
         <ul className="lp-team__grid">
-          {TEAM.map(({ name, role, initials }) => (
+          {TEAM.map(({ name, initials }) => (
             <li key={name} className="lp-team__card">
               <span className="lp-team__avatar" aria-hidden="true">
                 {initials}
               </span>
-              <div className="lp-team__info">
-                <p className="lp-team__name">{name}</p>
-                <p className="lp-team__role">{role}</p>
-              </div>
+              <p className="lp-team__name">{name}</p>
             </li>
           ))}
         </ul>
