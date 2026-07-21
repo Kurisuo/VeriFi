@@ -1,38 +1,157 @@
+import hashlib
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
-from chunker import chunk_pages
-from embedder import add_embeddings
-from jsonl_writer import write_jsonl
-from pdf_reader import extract_pdf_text
+try:
+    from .chunker import chunk_pages
+    from .embedder import add_embeddings
+    from .extraction_cache import DEFAULT_CACHE_DIR, load_or_extract_pdf_layout
+    from .jsonl_writer import write_json, write_jsonl
+    from .pdf_reader import extract_pdf_text
+    from .semantic_chunker import semantic_chunk_pages
+    from .versions import EXTRACTION_VERSION
+except ImportError:
+    from chunker import chunk_pages
+    from embedder import add_embeddings
+    from extraction_cache import DEFAULT_CACHE_DIR, load_or_extract_pdf_layout
+    from jsonl_writer import write_json, write_jsonl
+    from pdf_reader import extract_pdf_text
+    from semantic_chunker import semantic_chunk_pages
+    from versions import EXTRACTION_VERSION
 
 
 SOURCE_DIR = Path("source_files")
 OUTPUT_PATH = Path("output/chunks.jsonl")
+LAYOUT_OUTPUT_PATH = Path("output/layout_chunks.jsonl")
+STATS_PATH = Path("output/ingestion_stats.json")
 
 
 def find_pdf_files(source_dir=SOURCE_DIR):
     return sorted(source_dir.glob("*.pdf"))
 
 
-def build_chunk_records(pdf_files):
-    all_chunks = []
+def source_fingerprint(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def extract_documents(pdf_files, cache_dir=DEFAULT_CACHE_DIR, return_cache_stats=False):
+    documents = []
     total_pages = 0
-
+    cache_events = []
     for pdf_path in pdf_files:
-        pages = extract_pdf_text(str(pdf_path))
-        total_pages += len(pages)
-
-        chunks = chunk_pages(
-            pages,
-            source_document=pdf_path.name
+        fingerprint = source_fingerprint(pdf_path)
+        pages, cache_event = load_or_extract_pdf_layout(
+            pdf_path,
+            fingerprint,
+            cache_dir=cache_dir,
+            extractor=extract_pdf_text,
         )
+        total_pages += len(pages)
+        documents.append((pdf_path, pages, fingerprint))
+        cache_events.append(cache_event)
+        print(
+            f"  {pdf_path.name}: cache {cache_event['status']} "
+            f"({len(pages)} pages)",
+            flush=True,
+        )
+    if return_cache_stats:
+        cache_stats = {
+            "version": EXTRACTION_VERSION,
+            "hits": sum(event["cache_hit"] for event in cache_events),
+            "misses": sum(not event["cache_hit"] for event in cache_events),
+            "documents": cache_events,
+        }
+        return documents, total_pages, cache_stats
+    return documents, total_pages
 
-        all_chunks.extend(chunks)
 
-    for chunk_index, chunk in enumerate(all_chunks):
+def _renumber(records):
+    for chunk_index, chunk in enumerate(records):
         chunk["chunk_index"] = chunk_index
+    return records
 
-    return all_chunks, total_pages
+
+def build_layout_records(documents):
+    records = []
+    for pdf_path, pages, fingerprint in documents:
+        records.extend(
+            chunk_pages(
+                pages,
+                source_document=pdf_path.name,
+                source_fingerprint=fingerprint,
+            )
+        )
+    return _renumber(records)
+
+
+def build_semantic_records(documents):
+    records = []
+    for pdf_path, pages, fingerprint in documents:
+        records.extend(
+            semantic_chunk_pages(
+                pages,
+                source_document=pdf_path.name,
+                source_fingerprint=fingerprint,
+            )
+        )
+    return _renumber(records)
+
+
+def build_chunk_records(pdf_files):
+    documents, total_pages = extract_documents(pdf_files)
+    return build_semantic_records(documents), total_pages
+
+
+def run_pipeline(pdf_files):
+    pipeline_started = time.perf_counter()
+    timings = {}
+
+    stage_started = time.perf_counter()
+    print("Stage: extracting PDF layout", flush=True)
+    documents, total_pages, extraction_cache = extract_documents(
+        pdf_files,
+        return_cache_stats=True,
+    )
+    timings["extraction_seconds"] = time.perf_counter() - stage_started
+
+    stage_started = time.perf_counter()
+    print("Stage: building layout chunks", flush=True)
+    layout_chunks = build_layout_records(documents)
+    timings["layout_chunking_seconds"] = time.perf_counter() - stage_started
+
+    stage_started = time.perf_counter()
+    print("Stage: building semantic chunks", flush=True)
+    semantic_chunks = build_semantic_records(documents)
+    timings["semantic_chunking_seconds"] = time.perf_counter() - stage_started
+
+    stage_started = time.perf_counter()
+    print("Stage: generating embeddings", flush=True)
+    semantic_chunks = add_embeddings(semantic_chunks)
+    timings["embedding_seconds"] = time.perf_counter() - stage_started
+
+    stage_started = time.perf_counter()
+    print("Stage: writing outputs", flush=True)
+    write_jsonl(layout_chunks, str(LAYOUT_OUTPUT_PATH))
+    write_jsonl(semantic_chunks, str(OUTPUT_PATH))
+    timings["write_seconds"] = time.perf_counter() - stage_started
+    timings["total_seconds"] = time.perf_counter() - pipeline_started
+
+    stats = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "documents": len(pdf_files),
+        "pages": total_pages,
+        "layout_chunks": len(layout_chunks),
+        "semantic_chunks": len(semantic_chunks),
+        "cache": {"extraction": extraction_cache},
+        "timings": {key: round(value, 4) for key, value in timings.items()},
+    }
+    write_json(stats, str(STATS_PATH))
+    return stats
 
 
 def main():
@@ -41,15 +160,22 @@ def main():
     if not pdf_files:
         raise FileNotFoundError(f"No PDF files found in {SOURCE_DIR}")
 
-    chunks, total_pages = build_chunk_records(pdf_files)
-    chunks = add_embeddings(chunks)
+    stats = run_pipeline(pdf_files)
 
-    write_jsonl(chunks, str(OUTPUT_PATH))
-
-    print(f"Documents: {len(pdf_files)}")
-    print(f"Pages: {total_pages}")
-    print(f"Chunks: {len(chunks)}")
-    print(f"Output written to: {OUTPUT_PATH}")
+    print(f"Documents: {stats['documents']}")
+    print(f"Pages: {stats['pages']}")
+    print(f"Layout chunks: {stats['layout_chunks']}")
+    print(f"Semantic chunks: {stats['semantic_chunks']}")
+    extraction_cache = stats["cache"]["extraction"]
+    print(
+        f"Extraction cache: {extraction_cache['hits']} hits, "
+        f"{extraction_cache['misses']} misses"
+    )
+    for name, seconds in stats["timings"].items():
+        print(f"{name}: {seconds:.4f}")
+    print(f"Layout output written to: {LAYOUT_OUTPUT_PATH}")
+    print(f"Semantic output written to: {OUTPUT_PATH}")
+    print(f"Runtime stats written to: {STATS_PATH}")
 
 
 if __name__ == "__main__":
