@@ -29,6 +29,14 @@ const TECH_PILLS = [
   "Source Citations",
 ];
 
+const TEAM = [
+  { name: "Christopher Zarraga Jimenez", initials: "CZ" },
+  { name: "Sai Gonuguntla", initials: "SG" },
+  { name: "Divya Machiraju", initials: "DM" },
+  { name: "Srushti Chaudhari", initials: "SC" },
+  { name: "Ethan Williams", initials: "EW" },
+];
+
 export default function LandingPage() {
   const [question, setQuestion] = useState("");
   const navigate = useNavigate();
@@ -150,6 +158,27 @@ export default function LandingPage() {
         <a href="/chat" className="lp-btn lp-btn--primary lp-btn--lg">
           Open the Demo →
         </a>
+      </section>
+
+      {/* ── Team ───────────────────────────────────────── */}
+      <section className="lp-team" id="team">
+        <p className="lp-section-eyebrow">The people behind VeriFi</p>
+        <h2 className="lp-section-title">Meet the team</h2>
+        <p className="lp-section-subtitle">
+          The five people building VeriFi end to end — from document ingestion
+          to grounded answers in the UI.
+        </p>
+
+        <ul className="lp-team__grid">
+          {TEAM.map(({ name, initials }) => (
+            <li key={name} className="lp-team__card">
+              <span className="lp-team__avatar" aria-hidden="true">
+                {initials}
+              </span>
+              <p className="lp-team__name">{name}</p>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* ── Footer ─────────────────────────────────────── */}
