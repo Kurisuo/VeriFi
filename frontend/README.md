@@ -52,6 +52,10 @@ After merge, confirm the latest commit appears under **Actions → Deploy fronte
 to GitHub Pages**, then hard-refresh the live URL (Pages can cache for a few
 minutes). Manual redeploy: **Actions → Run workflow**.
 
+**SPA routing note:** Internal nav must use React Router `Link` / `navigate`
+(or `import.meta.env.BASE_URL`), not root-absolute `<a href="/chat">`. Those
+resolve to `kurisuo.github.io/chat` and 404 outside the `/VeriFi/` base.
+
 ## API contract (FastAPI — `backend/src/main.py`)
 
 ### `GET /health`

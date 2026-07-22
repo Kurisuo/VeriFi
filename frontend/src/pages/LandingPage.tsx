@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const HOW_IT_WORKS = [
   {
@@ -52,10 +52,10 @@ export default function LandingPage() {
     <div className="lp">
       {/* ── Navbar ─────────────────────────────────────── */}
       <nav className="lp-nav">
-        <a href="/" className="lp-nav__logo">
+        <Link to="/" className="lp-nav__logo">
           <span className="lp-nav__logo-icon">F</span>
           <span className="lp-nav__logo-name">VeriFi</span>
-        </a>
+        </Link>
 
         <ul className="lp-nav__links">
           <li><a href="#how-it-works">How It Works</a></li>
@@ -64,8 +64,8 @@ export default function LandingPage() {
         </ul>
 
         <div className="lp-nav__actions">
-          <a href="/chat" className="lp-btn lp-btn--ghost">Sign In</a>
-          <a href="/chat" className="lp-btn lp-btn--primary">Try Demo</a>
+          <Link to="/chat" className="lp-btn lp-btn--ghost">Sign In</Link>
+          <Link to="/chat" className="lp-btn lp-btn--primary">Try Demo</Link>
         </div>
       </nav>
 
@@ -106,9 +106,9 @@ export default function LandingPage() {
 
           <p className="lp-hero__note">
             Or{" "}
-            <a href="/chat" className="lp-hero__note-link">
+            <Link to="/chat" className="lp-hero__note-link">
               open the demo directly →
-            </a>
+            </Link>
           </p>
         </div>
       </section>
@@ -155,9 +155,9 @@ export default function LandingPage() {
           Ask a real Fidelity policy question and watch the full RAG pipeline
           retrieve, ground, and cite its answer.
         </p>
-        <a href="/chat" className="lp-btn lp-btn--primary lp-btn--lg">
+        <Link to="/chat" className="lp-btn lp-btn--primary lp-btn--lg">
           Open the Demo →
-        </a>
+        </Link>
       </section>
 
       {/* ── Team ───────────────────────────────────────── */}
